@@ -24,21 +24,21 @@ diesel = { version = "2.3.9", features = ["sqlite", "r2d2", "chrono"] }
 r2d2 = "0.8.10"
 ocsp = {git = "https://github.com/DorianCoding/ocsp-rs.git", tag="1.0.0" }
 pem = "3.0.6"
-openssl = { version = "0.10.79", features = ["vendored"] }
+openssl = { version = "0.10.80", features = ["vendored"] }
 ring = "0.17.14"
-x509-parser = "~0.17.0"
+x509-parser = "~0.18.1"
 hex = "~0.4.3"
 zeroize = { version = "~1.8.2", features = ["std", "zeroize_derive"] }
 log = "0.4.29"
 async-trait = "0.1.89"
-tokio = { version = "1.52.2", features = ["rt-multi-thread", "macros", "fs", "io-util", "time"] }
+tokio = { version = "1.52.3", features = ["rt-multi-thread", "macros", "fs", "io-util", "time"] }
 
 [dependencies.rocket]
 version = "0.5.1"
 features = ["json"]
 
 [dev-dependencies]
-mockall = "0.12.1"
+mockall = "0.14.0"
 [features]
 api=[]
 mysql = ["diesel/mysql"]
