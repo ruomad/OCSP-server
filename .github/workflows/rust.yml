@@ -35,7 +35,7 @@ jobs:
           prerelease: ${{ github.event.inputs.prerelease || false }}
 
   upload-assets:
-    needs: create-release
+    #needs: create-release
     strategy:
       fail-fast: false
       matrix:
