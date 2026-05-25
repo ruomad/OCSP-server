@@ -47,7 +47,7 @@ mod api;
 mod database;
 mod r#struct;
 
-#[cfg(not(any(feature = "mysql", feature = "postgres")))]
+#[cfg(not(any(feature = "mysql", feature = "postgres", feature = "sqlite")))]
 compile_error!("At least one database backend should be activated.");
 
 #[cfg(test)]

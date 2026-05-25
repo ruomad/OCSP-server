@@ -15,6 +15,7 @@ use chrono::{Datelike, NaiveDateTime, Timelike};
 use diesel::MysqlConnection;
 #[cfg(feature = "postgres")]
 use diesel::PgConnection;
+#[cfg(feature = "sqlite")]
 use diesel::SqliteConnection;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -23,6 +24,7 @@ use log::{debug, info, warn};
 use ocsp::common::asn1::GeneralizedTime;
 use ocsp::response::{CertStatus as OcspCertStatus, CertStatusCode, CrlReason, RevokedInfo};
 use std::error::Error;
+#[cfg(feature = "sqlite")]
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
@@ -42,7 +44,7 @@ impl DatabaseType {
             _ => DatabaseType::SQLite,
         }
     }
-    #[cfg(any(feature = "mysql", feature = "postgres"))]
+    #[cfg(any(feature = "mysql", feature = "postgres", feature = "sqlite"))]
     fn default_port(&self) -> u16 {
         match self {
             DatabaseType::MySQL => DEFAULT_MYSQL_PORT,
@@ -97,6 +99,7 @@ enum DatabaseConnection {
     MySQL(Pool<ConnectionManager<MysqlConnection>>),
     #[cfg(feature = "postgres")]
     PostgreSQL(Pool<ConnectionManager<PgConnection>>),
+    #[cfg(feature = "sqlite")]
     SQLite(Pool<ConnectionManager<SqliteConnection>>),
 }
 
@@ -159,7 +162,8 @@ impl DieselDatabase {
 
                 DatabaseConnection::PostgreSQL(pool)
             }
-            _ => {
+            #[cfg(feature = "sqlite")]
+            DatabaseType::SQLite => {
                 let db_path = &config.dbname;
 
                 if let Some(parent) = Path::new(db_path).parent()
@@ -177,7 +181,8 @@ impl DieselDatabase {
                     .build(manager)?;
 
                 DatabaseConnection::SQLite(pool)
-            }
+            },
+            _ => return Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidInput,"Invalid database choice")))
         };
 
         Ok(Self {
@@ -349,7 +354,7 @@ impl DieselDatabase {
 
         Ok(result)
     }
-
+    #[cfg(feature = "sqlite")]
     async fn check_cert_sqlite(
         &self,
         pool: &Pool<ConnectionManager<SqliteConnection>>,
@@ -551,7 +556,7 @@ impl DieselDatabase {
         );
         Ok(())
     }
-
+    #[cfg(feature = "sqlite")]
     fn create_tables_if_needed_sqlite(
         &self,
         pool: &Pool<ConnectionManager<SqliteConnection>>,
@@ -685,7 +690,7 @@ impl DieselDatabase {
         })
         .await?
     }
-
+    #[cfg(feature = "sqlite")]
     async fn add_certificate_sqlite(
         &self,
         pool: &Pool<ConnectionManager<SqliteConnection>>,
@@ -818,7 +823,7 @@ impl DieselDatabase {
             Ok(())
         }).await?
     }
-
+    #[cfg(feature = "sqlite")]
     async fn revoke_certificate_sqlite(
         &self,
         pool: &Pool<ConnectionManager<SqliteConnection>>,
@@ -938,7 +943,7 @@ impl DieselDatabase {
 
         Ok(result)
     }
-
+    #[cfg(feature = "sqlite")]
     async fn get_certificate_status_sqlite(
         &self,
         pool: &Pool<ConnectionManager<SqliteConnection>>,
@@ -1073,7 +1078,7 @@ impl DieselDatabase {
 
         Ok(result)
     }
-
+    #[cfg(feature = "sqlite")]
     async fn list_certificates_sqlite(
         &self,
         pool: &Pool<ConnectionManager<SqliteConnection>>,
@@ -1135,6 +1140,7 @@ impl Database for DieselDatabase {
             DatabaseConnection::PostgreSQL(pool) => {
                 self.check_cert_postgres(pool, certnum, revoked).await
             }
+            #[cfg(feature = "sqlite")]
             DatabaseConnection::SQLite(pool) => {
                 self.check_cert_sqlite(pool, certnum, revoked).await
             }
@@ -1147,6 +1153,7 @@ impl Database for DieselDatabase {
             DatabaseConnection::MySQL(pool) => self.create_tables_if_needed_mysql(pool),
             #[cfg(feature = "postgres")]
             DatabaseConnection::PostgreSQL(pool) => self.create_tables_if_needed_postgres(pool),
+#[cfg(feature = "sqlite")]
             DatabaseConnection::SQLite(pool) => self.create_tables_if_needed_sqlite(pool),
         }
     }
@@ -1159,6 +1166,7 @@ impl Database for DieselDatabase {
             DatabaseConnection::PostgreSQL(pool) => {
                 self.add_certificate_postgres(pool, cert_num).await
             }
+            #[cfg(feature = "sqlite")]
             DatabaseConnection::SQLite(pool) => self.add_certificate_sqlite(pool, cert_num).await,
         }
     }
@@ -1185,6 +1193,7 @@ impl Database for DieselDatabase {
                 self.revoke_certificate_postgres(pool, cert_num, revocation_time, reason)
                     .await
             }
+            #[cfg(feature = "sqlite")]
             DatabaseConnection::SQLite(pool) => {
                 self.revoke_certificate_sqlite(pool, cert_num, revocation_time, reason)
                     .await
@@ -1205,6 +1214,7 @@ impl Database for DieselDatabase {
             DatabaseConnection::PostgreSQL(pool) => {
                 self.get_certificate_status_postgres(pool, cert_num).await
             }
+            #[cfg(feature = "sqlite")]
             DatabaseConnection::SQLite(pool) => {
                 self.get_certificate_status_sqlite(pool, cert_num).await
             }
@@ -1222,6 +1232,7 @@ impl Database for DieselDatabase {
             DatabaseConnection::PostgreSQL(pool) => {
                 self.list_certificates_postgres(pool, status).await
             }
+            #[cfg(feature = "sqlite")]
             DatabaseConnection::SQLite(pool) => self.list_certificates_sqlite(pool, status).await,
         }
     }
