@@ -44,12 +44,15 @@ impl DatabaseType {
             _ => DatabaseType::SQLite,
         }
     }
-    #[cfg(any(feature = "mysql", feature = "postgres", feature = "sqlite"))]
+
+    #[cfg(any(feature = "mysql", feature = "postgres"))]
     fn default_port(&self) -> u16 {
         match self {
+            #[cfg(feature = "mysql")]
             DatabaseType::MySQL => DEFAULT_MYSQL_PORT,
+            #[cfg(feature = "postgres")]
             DatabaseType::PostgreSQL => DEFAULT_POSTGRES_PORT,
-            DatabaseType::SQLite => 0,
+            _ => 0,
         }
     }
 

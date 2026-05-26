@@ -17,7 +17,7 @@ exclude = [
 
 [dependencies]
 clap = { version = "4.6.1", features = ["derive", "cargo"] }
-chrono = { version = "~0.4.44", default-features = false, features = ["std", "serde"]}
+chrono = { version = "~0.4.44", default-features = false, features = ["std", "serde"] }
 config-file = "~0.2.3"
 serde = "~1.0.228"
 diesel = { version = "2.3.9", features = ["r2d2", "chrono"] }
@@ -39,12 +39,14 @@ features = ["json"]
 
 [dev-dependencies]
 mockall = "0.14.0"
+
 [features]
-api=[]
+api = []
 sqlite = ["diesel/sqlite"]
 mysql = ["diesel/mysql"]
 postgres = ["diesel/postgres"]
-default = ["api","mysql","postgres", "sqlite"]
+default = ["api", "mysql", "postgres", "sqlite"]
+
 [profile.release]
 strip = "symbols"
 lto = true
